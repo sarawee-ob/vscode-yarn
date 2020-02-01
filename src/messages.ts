@@ -16,8 +16,16 @@ export function noLastScript() {
 	Window.showErrorMessage('No script executed yet');
 }
 
+export function noRunScript(script: string) {
+	Window.showErrorMessage('No ' + script + ' script in your package.json file');
+}
+
 export function noTestScript() {
 	Window.showErrorMessage('No test script in your package.json file');
+}
+
+export function noDevScript() {
+	Window.showErrorMessage('No dev script in your package.json file');
 }
 
 export function noStartScript() {

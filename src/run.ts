@@ -1,26 +1,38 @@
-import * as Path from 'path';
-import * as Fs from 'fs';
-import { workspace as Workspace, window as Window, QuickPickItem } from 'vscode';
-import * as Messages from './messages';
-import { runCommand } from './run-command';
+import * as Path from "path";
+import * as Fs from "fs";
+import {
+	workspace as Workspace,
+	window as Window,
+	QuickPickItem
+} from "vscode";
+import * as Messages from "./messages";
+import { runCommand } from "./run-command";
 
 let lastScript: string;
 
-export function yarnRunScript() {
+export function yarnRunScript(arg: string) {
 	const scripts = readScripts();
 	if (!scripts) {
 		return;
 	}
+	if (arg) {
+		if (!scripts[arg]) {
+			Messages.noRunScript(arg);
+			return;
+		}
+		lastScript = arg;
+		runCommand(["run", arg]);
+	} else {
+		const items: QuickPickItem[] = Object.keys(scripts).map(key => {
+			return { label: key, description: scripts[key] };
+		});
 
-	const items: QuickPickItem[] = Object.keys(scripts).map((key) => {
-		return { label: key, description: scripts[key] };
-	});
-
-	Window.showQuickPick(items).then((value) => {
-		lastScript = value.label;
-		runCommand(['run', value.label]);
-	});
-};
+		Window.showQuickPick(items).then(value => {
+			lastScript = value.label;
+			runCommand(["run", value.label]);
+		});
+	}
+}
 
 export function yarnTest() {
 	const scripts = readScripts();
@@ -33,8 +45,23 @@ export function yarnTest() {
 		return;
 	}
 
-	lastScript = 'test';
-	runCommand(['run', 'test']);
+	lastScript = "test";
+	runCommand(["run", "test"]);
+}
+
+export function yarnDev() {
+	const scripts = readScripts();
+	if (!scripts) {
+		return;
+	}
+
+	if (!scripts.dev) {
+		Messages.noDevScript();
+		return;
+	}
+
+	lastScript = "dev";
+	runCommand(["run", "dev"]);
 }
 
 export function yarnStart() {
@@ -48,8 +75,8 @@ export function yarnStart() {
 		return;
 	}
 
-	lastScript = 'start';
-	runCommand(['run', 'start']);
+	lastScript = "start";
+	runCommand(["run", "start"]);
 }
 
 export function yarnBuild() {
@@ -63,22 +90,21 @@ export function yarnBuild() {
 		return;
 	}
 
-	lastScript = 'build';
-	runCommand(['run', 'build']);
+	lastScript = "build";
+	runCommand(["run", "build"]);
 }
 
 export function yarnRunLastScript() {
 	if (lastScript) {
-		runCommand(['run', lastScript]);
-	}
-	else {
+		runCommand(["run", lastScript]);
+	} else {
 		Messages.noLastScript();
 	}
 }
 
-const readScripts = function () {
-	let filename = Path.join(Workspace.rootPath, 'package.json');
-	const confPackagejson = Workspace.getConfiguration('yarn')['packageJson'];
+const readScripts = function() {
+	let filename = Path.join(Workspace.rootPath, "package.json");
+	const confPackagejson = Workspace.getConfiguration("yarn")["packageJson"];
 
 	if (confPackagejson) {
 		filename = Path.join(Workspace.rootPath, confPackagejson);
@@ -99,10 +125,8 @@ const readScripts = function () {
 
 		Messages.noScriptsInfo();
 		return null;
-	}
-	catch (ignored) {
+	} catch (ignored) {
 		Messages.noPackageError();
 		return null;
 	}
 };
-
